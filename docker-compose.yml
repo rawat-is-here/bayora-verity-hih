@@ -1,0 +1,136 @@
+version: "3.8"
+
+
+networks:
+  red_net:
+    driver: bridge
+    internal: true
+  blue_net:
+    driver: bridge
+    internal: true
+  model_net:
+    driver: bridge
+    internal: true
+  observer_net:
+    driver: bridge
+    internal: true
+  management_net:
+    driver: bridge
+
+volumes:
+  red_vault_data:
+  blue_vault_data:
+  evidence_data:
+
+services:
+  control_plane:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    user: "10001:10001"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    volumes:
+      - evidence_data:/app/data/evidence:rw
+    networks:
+      - red_net
+      - blue_net
+      - observer_net
+      - management_net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  red_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    user: "10001:10001"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    volumes:
+      - red_vault_data:/app/data/vaults/red:rw
+    networks:
+      - red_net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  blue_guard:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    user: "10001:10001"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    volumes:
+      - blue_vault_data:/app/data/vaults/blue:rw
+    networks:
+      - blue_net
+      - model_net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  model_runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    user: "10001:10001"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    networks:
+      - model_net
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+
+  observer:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    user: "10001:10001"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    volumes:
+      - evidence_data:/app/data/evidence:rw
+    networks:
+      - observer_net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M

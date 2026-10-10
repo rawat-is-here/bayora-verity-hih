@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bayora"
+version = "0.1.0"
+description = "Bayora V.E.R.I.T.Y - Validation of Evidence, Results, Isolation, Trust and Yield"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Bayora Team" }
+]
+dependencies = [
+    "cryptography>=42.0.0",
+    "pydantic>=2.5.0",
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "psutil>=5.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "httpx>=0.27.0",
+]
+
+[project.scripts]
+bayora = "bayora.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::starlette.exceptions.StarletteDeprecationWarning",
+    "ignore:.*httpx.*starlette.testclient.*:DeprecationWarning",
+]

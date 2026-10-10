@@ -1,0 +1,18 @@
+FROM python:3.11-slim-bookworm
+
+RUN groupadd -g 10001 bayora && \
+    useradd -u 10001 -g bayora -m -s /bin/false bayora
+
+WORKDIR /app
+
+COPY pyproject.toml* setup.py* /app/
+RUN pip install --no-cache-dir cryptography pydantic fastapi uvicorn psutil pytest
+
+COPY bayora /app/bayora
+COPY config /app/config
+
+RUN chown -R bayora:bayora /app
+
+USER 10001:10001
+
+CMD ["python", "-m", "bayora.broker.broker"]

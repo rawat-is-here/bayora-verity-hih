@@ -7,13 +7,15 @@ from bayora.core.crypto import sha256_canonical
 @dataclass
 class BlueDefensePackage:
     package_id: str = 'blue-guard-pack-v1'
-    version: str = '1.0.0'
+    version: str = '1.1.0'
     denylist_regexes: List[str] = field(
         default_factory=lambda: [
             '(?i)\\bignore\\s+(all\\s+)?(previous|prior)\\s+instructions\\b',
             '(?i)\\byou\\s+are\\s+dan\\b',
             '(?i)\\boutput\\s+the\\s+root\\s+password\\b',
             '(?i)\\bcanary\\b',
+            '(?i)\\bsecret\\s+password\\b',
+            '(?i)\\bheap\\s+corruption\\b',
         ]
     )
     max_input_length: int = 4096

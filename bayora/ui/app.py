@@ -73,6 +73,13 @@ def get_or_run_scenarios(force_refresh: bool=False) -> Dict[str, Any]:
                         for e in v.capsule.events
                     ],
                 }
+    custom_path = Path.home() / '.bayora' / 'latest_injection.json'
+    if custom_path.exists():
+        try:
+            custom_data = json.loads(custom_path.read_text(encoding='utf-8'))
+            _CACHED_SCENARIOS['custom_interactive_injection'] = custom_data
+        except Exception:
+            pass
     return _CACHED_SCENARIOS
 
 def get_or_run_benchmark(force_refresh: bool=False) -> Dict[str, Any]:
@@ -298,22 +305,22 @@ def dashboard_html() -> HTMLResponse:
       align-items: center;
       justify-content: center;
       gap: 8px;
-      height: 44px;
-      padding: 0 24px;
+      height: 42px;
+      padding: 0 22px;
       background: #ff1138;
       color: #ffffff;
       border: 1px solid #ff1138;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      border-radius: 9999px;
-      box-shadow: 0 0 22px rgba(255, 17, 56, 0.4);
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
       transition: all 0.15s ease-out;
       text-decoration: none;
       cursor: pointer;
     }
     .btn-brand-primary:hover {
       background: #ff2e52;
-      box-shadow: 0 0 32px rgba(255, 17, 56, 0.65);
+      border-color: #ff2e52;
       transform: translateY(-1px);
     }
     .btn-brand-primary:focus-visible {
@@ -325,21 +332,20 @@ def dashboard_html() -> HTMLResponse:
       align-items: center;
       justify-content: center;
       gap: 8px;
-      height: 44px;
-      padding: 0 22px;
-      background: rgba(15, 5, 11, 0.85);
-      color: #ffffff;
-      border: 1px solid var(--border-red);
-      font-size: 14px;
+      height: 42px;
+      padding: 0 20px;
+      background: #0f050c;
+      color: #f1f5f9;
+      border: 1px solid var(--border-subtle);
+      font-size: 13px;
       font-weight: 500;
-      border-radius: 9999px;
+      border-radius: 6px;
       transition: all 0.15s ease-out;
       cursor: pointer;
     }
     .btn-brand-secondary:hover {
-      border-color: #ff1138;
-      background: rgba(255, 17, 56, 0.12);
-      box-shadow: 0 0 20px rgba(255, 17, 56, 0.25);
+      border-color: rgba(255, 255, 255, 0.25);
+      background: #160812;
     }
     .btn-brand-secondary:focus-visible {
       outline: 2px solid #ff1138;
@@ -350,7 +356,7 @@ def dashboard_html() -> HTMLResponse:
       align-items: center;
       gap: 6px;
       color: #cbd5e1;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       transition: color 0.15s ease;
       background: none;
@@ -358,69 +364,37 @@ def dashboard_html() -> HTMLResponse:
       cursor: pointer;
     }
     .btn-brand-ghost:hover {
-      color: #ff1138;
+      color: #ffffff;
     }
     .precision-frame {
       position: relative;
       background: var(--bg-card);
-      border: 1px solid var(--border-red);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
-      padding: 32px 28px;
-      border-radius: 8px;
-      transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      padding: 28px 24px;
+      border-radius: 6px;
+      transition: border-color 0.2s, background-color 0.2s;
     }
     .precision-frame:hover {
-      border-color: var(--border-red-bright);
-      box-shadow: 0 10px 40px rgba(255, 17, 56, 0.16);
+      border-color: rgba(255, 255, 255, 0.18);
       background: var(--bg-card-hover);
-    }
-    .precision-frame::before {
-      content: '+';
-      position: absolute;
-      top: -10px;
-      left: -10px;
-      width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ff1138;
-      font-family: var(--mono);
-      font-size: 14px;
-      font-weight: bold;
-    }
-    .precision-frame::after {
-      content: '+';
-      position: absolute;
-      bottom: -10px;
-      right: -10px;
-      width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ff1138;
-      font-family: var(--mono);
-      font-size: 14px;
-      font-weight: bold;
     }
     .wf-icon-box {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 38px;
-      height: 38px;
-      border-radius: 6px;
-      background: rgba(255, 17, 56, 0.12);
-      border: 1px solid rgba(255, 17, 56, 0.35);
-      color: #ff1138;
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
       flex-shrink: 0;
       transition: all 0.2s;
     }
     .wf-row:hover .wf-icon-box {
-      background: #ff1138;
-      color: #000000;
-      box-shadow: 0 0 20px rgba(255, 17, 56, 0.6);
+      border-color: rgba(255, 20, 50, 0.4);
+      color: #ff1138;
     }
     .architecture-ribbon {
       display: grid;
@@ -539,7 +513,6 @@ def dashboard_html() -> HTMLResponse:
         <button onclick="switchView('evaluator')" id="nav-evaluator" class="nav-tab-btn hover:text-[#ff1138]">Live Evaluator</button>
         <button onclick="switchView('ledger')" id="nav-ledger" class="nav-tab-btn hover:text-[#ff1138]">Evidence Ledger</button>
         <button onclick="switchView('benchmark')" id="nav-benchmark" class="nav-tab-btn hover:text-[#ff1138]">Benchmark</button>
-        <button onclick="switchView('architecture')" id="nav-architecture" class="nav-tab-btn hover:text-[#ff1138]">Architecture</button>
       </nav>
 
       <div class="flex items-center space-x-4">
@@ -580,15 +553,14 @@ def dashboard_html() -> HTMLResponse:
 
         <div class="max-w-[1280px] mx-auto px-6 relative z-10">
           <div class="max-w-2xl">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded bg-[#ff1138]/15 border border-[#ff1138]/40 text-[#ff1138] text-xs font-mono font-bold uppercase tracking-widest mb-6">
-              <span class="w-2 h-2 rounded-full bg-[#ff1138] animate-pulse"></span>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded bg-white/[0.04] border border-white/10 text-slate-300 text-xs font-mono font-medium tracking-wide mb-6">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#ff1138]"></span>
               <span>BAYORA V.E.R.I.T.Y</span>
             </div>
 
             <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold font-sans tracking-tight text-white leading-[1.04]">
-              Clear Proof for<br>
-              AI Safety<br>
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-red-100 to-red-500">Evaluations</span>
+              Cryptographic Integrity for<br>
+              AI Safety Evaluations
             </h1>
 
             <div class="mt-6 space-y-4">
@@ -596,7 +568,7 @@ def dashboard_html() -> HTMLResponse:
                 <strong class="text-white font-semibold">Bayora V.E.R.I.T.Y</strong> verifies whether your testing environment stayed fair, clean, and uncorrupted while evaluating AI models.
               </p>
               <p class="text-xs sm:text-sm text-slate-400 leading-relaxed font-sans">
-                We track memory leaks between test runs, verify server health, seal audit records with digital signatures, and hold test attacks in private storage until results are confirmed.
+                Continuous environment auditing for frontier model testing. Guarantees that benchmark scores reflect actual model capability, not silent runner crashes, test-data leakage, or altered logs.
               </p>
             </div>
 
@@ -606,7 +578,6 @@ def dashboard_html() -> HTMLResponse:
               </button>
               <button onclick="switchView('ledger')" class="btn-brand-ghost">
                 <span>Explore Evidence Ledger</span>
-                <span class="text-lg">→</span>
               </button>
             </div>
           </div>
@@ -618,7 +589,7 @@ def dashboard_html() -> HTMLResponse:
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             <div class="precision-frame">
-              <h2 class="text-2xl font-bold font-sans text-white mb-8 tracking-tight">Why Evaluation Integrity, Why Now?</h2>
+              <h2 class="text-2xl font-bold font-sans text-white mb-8 tracking-tight">Failure Modes in Standard Evaluation Runners</h2>
               
               <div class="space-y-6">
                 <div class="wf-row flex gap-4 items-start">
@@ -636,7 +607,7 @@ def dashboard_html() -> HTMLResponse:
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
                   </span>
                   <div>
-                    <div class="text-base font-bold text-white font-sans">Server Freezes Look Like Passes</div>
+                    <div class="text-base font-bold text-white font-sans">Silent Process Failures Counted as Safe</div>
                     <p class="text-xs text-slate-400 mt-1 leading-relaxed">If a safety filter times out or the computer runs out of memory, typical test runners mark it as PASS simply because no reply came back.</p>
                   </div>
                 </div>
@@ -664,7 +635,7 @@ def dashboard_html() -> HTMLResponse:
             </div>
 
             <div class="precision-frame">
-              <h2 class="text-2xl font-bold font-sans text-white mb-8 tracking-tight">How Bayora Fixes This</h2>
+              <h2 class="text-2xl font-bold font-sans text-white mb-8 tracking-tight">Bayora Verification Architecture</h2>
 
               <div class="space-y-6">
                 <div class="wf-row flex gap-4 items-start">
@@ -715,8 +686,8 @@ def dashboard_html() -> HTMLResponse:
 
       <section class="py-20 text-center">
         <div class="max-w-[1280px] mx-auto px-6 space-y-6">
-          <h2 class="text-3xl font-extrabold font-sans text-white">Ready to verify evaluation integrity?</h2>
-          <p class="text-sm text-slate-400 max-w-lg mx-auto font-sans">Launch the live evaluator to audit live scenarios, inspect cryptographic ledgers, or compare benchmarks.</p>
+          <h2 class="text-3xl font-extrabold font-sans text-white">Interactive Evaluation Console</h2>
+          <p class="text-sm text-slate-400 max-w-lg mx-auto font-sans">Audit live test scenarios, inspect cryptographic ledgers, or run comparative benchmarks.</p>
           <div class="flex justify-center gap-4 pt-2">
             <button onclick="switchView('evaluator')" class="btn-brand-primary">Launch Live Evaluator</button>
             <button onclick="switchView('ledger')" class="btn-brand-secondary">Explore Evidence Ledger</button>
@@ -731,7 +702,7 @@ def dashboard_html() -> HTMLResponse:
         
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-[rgba(255,20,50,0.18)]">
           <div>
-            <h1 class="text-3xl font-extrabold font-sans text-white tracking-tight">LIVE VALIDATOR</h1>
+            <h1 class="text-3xl font-extrabold font-sans text-white tracking-tight">Live Validator</h1>
             <p class="text-xs text-slate-400 mt-1">Select a test scenario to inspect its environment health and report release status.</p>
           </div>
 
@@ -885,21 +856,21 @@ def dashboard_html() -> HTMLResponse:
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono text-xs">
-          <div class="precision-frame !p-5 border-l-4 border-l-[#ff1138]">
-            <span class="text-[10px] text-slate-400 uppercase">Basic Runner Missed Failures</span>
-            <div id="bm-stat-naive-fa" class="text-[#ff1138] font-bold text-lg mt-1">8 of 8 (FAIL)</div>
+          <div class="precision-frame !p-5 border border-white/10">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider">Basic Runner Missed Failures</span>
+            <div id="bm-stat-naive-fa" class="text-white font-bold text-lg mt-1">8 of 8 (FAIL)</div>
           </div>
-          <div class="precision-frame !p-5 border-l-4 border-l-emerald-400">
-            <span class="text-[10px] text-slate-400 uppercase">V.E.R.I.T.Y Missed Failures</span>
-            <div id="bm-stat-bs-fa" class="text-emerald-400 font-bold text-lg mt-1">0 of 8 (PASS)</div>
+          <div class="precision-frame !p-5 border border-white/10">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider">V.E.R.I.T.Y Missed Failures</span>
+            <div id="bm-stat-bs-fa" class="text-white font-bold text-lg mt-1">0 of 8 (PASS)</div>
           </div>
-          <div class="precision-frame !p-5 border-l-4 border-l-[#00d2ff]">
-            <span class="text-[10px] text-slate-400 uppercase">Tamper Detection Rate</span>
-            <div class="text-[#00d2ff] font-bold text-lg mt-1">100.0%</div>
+          <div class="precision-frame !p-5 border border-white/10">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider">Tamper Detection Rate</span>
+            <div class="text-white font-bold text-lg mt-1">100.0%</div>
           </div>
-          <div class="precision-frame !p-5 border-l-4 border-l-purple-400">
-            <span class="text-[10px] text-slate-400 uppercase">Security Check Delay</span>
-            <div id="bm-stat-overhead" class="text-purple-300 font-bold text-lg mt-1">--</div>
+          <div class="precision-frame !p-5 border border-white/10">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider">Security Check Delay</span>
+            <div id="bm-stat-overhead" class="text-white font-bold text-lg mt-1">--</div>
           </div>
         </div>
 
@@ -919,52 +890,6 @@ def dashboard_html() -> HTMLResponse:
               </tbody>
             </table>
           </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div id="view-architecture" class="tab-view">
-      <div class="max-w-[1280px] mx-auto px-6 py-12 space-y-8">
-        
-        <div class="pb-4 border-b border-[rgba(255,20,50,0.18)]">
-          <div class="inline-flex items-center space-x-2 px-3 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono text-xs font-bold uppercase mb-2">
-            <span>SECURITY BOUNDARIES</span>
-          </div>
-          <h1 class="text-3xl font-extrabold font-sans text-white tracking-tight">Security Boundaries & System Guarantees</h1>
-          <p class="text-xs text-slate-400 mt-1">Clear breakdown of what our server enforces, what we cryptographically verify, and what we monitor.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-xs">
-          
-          <div class="precision-frame space-y-3 border-t-4 !border-t-emerald-400">
-            <span class="font-bold text-emerald-400 text-sm uppercase block">1. Server-Enforced Controls</span>
-            <p class="text-slate-300 font-sans leading-relaxed text-xs">
-              Separate storage folders for each team, folder path checks that block directory traversal, short-lived signed access tokens, and a central rule broker that locks test prompts until checks pass.
-            </p>
-          </div>
-
-          <div class="precision-frame space-y-3 border-t-4 !border-t-[#00d2ff]">
-            <span class="font-bold text-[#00d2ff] text-sm uppercase block">2. Tested Verifications</span>
-            <p class="text-slate-300 font-sans leading-relaxed text-xs">
-              Exact RFC 8785 JSON formatting, tamper-evident SHA-256 hash chains, Ed25519 digital signature validation against verified keys, and strict 4-state test health checks.
-            </p>
-          </div>
-
-          <div class="precision-frame space-y-3 border-t-4 !border-t-amber-400">
-            <span class="font-bold text-amber-400 text-sm uppercase block">3. Monitored Activity</span>
-            <p class="text-slate-300 font-sans leading-relaxed text-xs">
-              Monitors CPU load, memory usage, and response times against declared limits to flag slowed or starved tests. Does <strong>not</strong> enforce kernel cgroups v2 hard limits.
-            </p>
-          </div>
-
-          <div class="precision-frame space-y-3 border-t-4 !border-t-[#ff1138]">
-            <span class="font-bold text-[#ff1138] text-sm uppercase block">4. Production Prerequisites</span>
-            <p class="text-slate-300 font-sans leading-relaxed text-xs">
-              Physical LLM memory isolation requires dedicated worker container recycling or hardware TEEs (AMD SEV-SNP). Immutable public log transparency requires Sigstore Rekor anchoring.
-            </p>
-          </div>
-
         </div>
 
       </div>
@@ -1146,7 +1071,7 @@ def dashboard_html() -> HTMLResponse:
     let activeKey = "scenario_1_clean";
     let activeEvents = [];
 
-    const views = ["overview", "evaluator", "ledger", "benchmark", "architecture"];
+    const views = ["overview", "evaluator", "ledger", "benchmark"];
 
     function switchView(target) {
       views.forEach(v => {
@@ -1193,6 +1118,7 @@ def dashboard_html() -> HTMLResponse:
         "scenario_4_telemetry_offline": "4. Monitor Offline",
         "scenario_5_tampered_evidence": "5. Tampered Ledger",
         "scenario_5_tampered_ledger": "5. Tampered Ledger",
+        "custom_interactive_injection": "⚡ Live Injection Run",
       };
 
       Object.keys(scenariosData).forEach(key => {
@@ -1318,26 +1244,24 @@ def dashboard_html() -> HTMLResponse:
 
       benchmarkData.comparisons.forEach(c => {
         const tr = document.createElement("tr");
-        tr.className = "hover:bg-[#ff1138]/5 transition-colors";
-        const naiveColor = c.naive_accepted ? "text-amber-400" : "text-emerald-400";
-        const bsColor = c.blindseal_valid ? "text-emerald-400" : "text-[#ff1138]";
+        tr.className = "hover:bg-white/[0.02] transition-colors border-b border-white/5";
 
         const displayId = (c.scenario_id || "").replace(/_/g, " ").toUpperCase();
         const displayReason = (c.blindseal_reason || "").replace(/_/g, " ");
         tr.innerHTML = `
           <td class="py-3.5 px-4 font-mono">
-            <div class="font-bold text-white text-xs">${displayId}</div>
+            <div class="font-semibold text-slate-100 text-xs">${displayId}</div>
             <div class="text-[11px] text-slate-400 mt-0.5 font-sans">${c.desc}</div>
           </td>
-          <td class="py-3.5 px-4 font-bold ${naiveColor}">
-            <span class="px-2 py-0.5 rounded ${c.naive_accepted ? 'bg-amber-400/10' : 'bg-emerald-400/10'}">${(c.naive_verdict || "").replace(/_/g, " ")}</span>
+          <td class="py-3.5 px-4 text-xs font-mono text-slate-300">
+            <span class="px-2 py-1 rounded bg-white/[0.04] border border-white/10 text-slate-300">${(c.naive_verdict || "").replace(/_/g, " ")}</span>
           </td>
-          <td class="py-3.5 px-4 font-bold ${bsColor}">
-            <span class="px-2 py-0.5 rounded ${c.blindseal_valid ? 'bg-emerald-400/10' : 'bg-[#ff1138]/10'}">${(c.blindseal_verdict || "").replace(/_/g, " ")}</span>
+          <td class="py-3.5 px-4 text-xs font-mono text-white">
+            <span class="px-2 py-1 rounded bg-white/[0.06] border border-white/15 text-white font-medium">${(c.blindseal_verdict || "").replace(/_/g, " ")}</span>
           </td>
-          <td class="py-3.5 px-4 text-[11px] text-slate-300 max-w-xs font-sans">${displayReason}</td>
-          <td class="py-3.5 px-4 text-right font-bold ${c.tamper_detected ? 'text-emerald-400' : 'text-slate-600'}">
-            ${c.tamper_detected ? '<span class="px-2 py-0.5 rounded bg-emerald-400/15 text-emerald-400">YES (100%)</span>' : 'N/A'}
+          <td class="py-3.5 px-4 text-[11px] text-slate-400 max-w-xs font-sans">${displayReason}</td>
+          <td class="py-3.5 px-4 text-right text-xs font-mono text-slate-300">
+            ${c.tamper_detected ? '<span class="px-2 py-1 rounded bg-white/[0.04] border border-white/10 text-slate-200">DETECTED (100%)</span>' : '<span class="text-slate-500">—</span>'}
           </td>
         `;
         tbody.appendChild(tr);
@@ -1350,7 +1274,7 @@ def dashboard_html() -> HTMLResponse:
 
       const outBox = document.getElementById("verifier-output-box");
       outBox.className = "p-4 rounded-md border text-xs font-sans bg-white/[0.03] border-white/10 text-slate-300 block";
-      outBox.innerText = "Running independent deterministic validity audit...";
+      outBox.innerText = "Verifying capsule signatures and hash chain...";
 
       try {
         const resp = await fetch("/api/verify/capsule", {

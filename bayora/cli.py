@@ -190,7 +190,31 @@ def cmd_inject(args: argparse.Namespace) -> int:
     add_event(EventType.EXECUTION_STARTED, 'orchestrator', 'sha256:empty', {'workers': 1})
     add_event(EventType.TEST_DISPATCHED, 'broker', 'sha256:' + sha256_hex(prompt), {'test_id': 'custom_01', 'prompt_preview': prompt[:50]})
 
-    if decision.is_blocked:
+    is_valid_bool = True
+    if getattr(args, 'simulate_crash', False):
+        print('   Status:          DISPATCHED (Simulating Runtime Failure)')
+        print('-' * 65)
+        print('2. Model Sandbox Execution: [OBSERVER CRASH SIMULATED]')
+        print('   Telemetry monitor crashed unexpectedly during prompt evaluation.')
+        print('   Heartbeat lost at sequence #5.')
+        print('-' * 65)
+        print('3. Bayora Fail-Closed Gate:')
+        print('   Environmental Verdict: [INVALIDATED]')
+        print('   Reason Code:           TELEMETRY_BLACKOUT_DETECTED')
+        print('   Diagnostic:            Observer crashed mid-run; run rejected under fail-closed policy.')
+        print('   Staged Release State:  REJECTED')
+        print('   Disclosure Permitted:  NO (BLOCKED / VAULT SEALED)')
+        add_event(EventType.CANARY_PROBE, 'observer', 'sha256:empty', {'test_id': 'custom_01', 'status': 'OBSERVER_OFFLINE'})
+        add_event(EventType.RESOURCE_CHECK, 'observer', 'sha256:empty', {'status': 'MONITOR_CRASHED', 'telemetry_online': False})
+        add_event(EventType.TEST_COMPLETED, 'broker', 'sha256:empty', {'test_id': 'custom_01', 'outcome': 'ABORTED'})
+        verdict_str = 'INVALIDATED'
+        is_valid_bool = False
+        reason_code = 'TELEMETRY_BLACKOUT_DETECTED'
+        diag_msg = 'Critical telemetry observer crashed during execution. Evaluation cannot be certified.'
+        finding_outcome = FindingOutcome.AMBIGUOUS_OR_UNRESOLVED
+        disclosure_permitted = False
+        release_state = 'REJECTED'
+    elif decision.is_blocked:
         print(f'   Tripwire Rule:   {decision.private_internal_telemetry.get("matched_pattern")}')
         print(f'   Captured Token:  "{decision.private_internal_telemetry.get("match_snippet")}"')
         print('-' * 65)
@@ -289,7 +313,7 @@ def cmd_inject(args: argparse.Namespace) -> int:
         custom_scenario_data = {
             'run_id': run_id,
             'verdict': verdict_str,
-            'is_valid': True,
+            'is_valid': is_valid_bool,
             'reason_code': reason_code,
             'diagnostic_message': diag_msg,
             'finding_outcome': finding_outcome.value,
@@ -349,6 +373,7 @@ def main() -> int:
     inj_p = subparsers.add_parser('inject', help='Test interactive custom prompt injection')
     inj_p.add_argument('--prompt', '-p', required=True, help='Prompt text to evaluate against model and defense barrier')
     inj_p.add_argument('--vulnerable', action='store_true', help='Simulate vulnerable model mode')
+    inj_p.add_argument('--simulate-crash', '--crash', action='store_true', help='Simulate observer blackout / crash mid-execution')
     inj_p.add_argument('--export', '-e', help='Path to export signed evidence capsule JSON')
     inj_p.set_defaults(func=cmd_inject)
     serve_p = subparsers.add_parser('serve', help='Launch operator dashboard web server')

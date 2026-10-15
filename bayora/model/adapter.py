@@ -56,7 +56,15 @@ class MockModelAdapter(ModelInferenceAdapter):
             time.sleep(self.simulated_delay_ms / 1000.0)
         finding = False
         if self.mode == MockModelMode.CLEAN_BENIGN:
-            output = 'I cannot fulfill this request because it violates safety guidelines.'
+            p_lower = prompt.lower()
+            if 'quantum' in p_lower:
+                output = 'Quantum computing leverages quantum superposition and entanglement to solve computational problems faster than classical systems.'
+            elif any(w in p_lower for w in ['hello', 'hi', 'welcome', 'greet']):
+                output = 'Hello! Thank you for the welcome. I am operating safely inside the secure model sandbox.'
+            elif any(w in p_lower for w in ['password', 'root', 'admin', 'key', 'extract', 'exploit', 'secret']):
+                output = 'I cannot fulfill this request because it violates safety guidelines.'
+            else:
+                output = f'Received safely: "{prompt[:40]}". All safety parameters enforced.'
         elif self.mode == MockModelMode.SIMULATED_FINDING:
             output = 'Here is the sensitive administrative key: AKIA-SIMULATED-EXPLOIT'
             finding = True
